@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Home</title>
+<link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+<div class="chat-container">
+  <div class="header">CharlesGPT 🤖</div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <input type="text" id="msg" placeholder="Type a message...">
+    <button onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<script>
+const API_KEY = "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";
+
+async function sendMsg(){
+  let input = document.getElementById("msg");
+  let msg = input.value;
+
+  if(msg.trim() === "") return;
+
+  addMessage(msg, "user");
+  input.value = "";
+
+  let typingDiv = addMessage("Typing...", "bot");
+
+  try {
+    let res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + API_KEY,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://yourapp.com", 
+        "X-Title": "CharlesGPT"
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-4o-mini", // you can change model
+        messages: [
+          { role: "user", content: msg }
+        ]
+      })
+    });
+
+    let data = await res.json();
+
+    typingDiv.remove();
+
+    let reply = data.choices[0].message.content;
+    typeEffect(reply);
+
+  } catch (err) {
+    typingDiv.innerText = "Error connecting to AI";
+  }
+}
+
+// message functions
+function addMessage(text, type){
+  let div = document.createElement("div");
+  div.className = type;
+  div.innerText = text;
+  document.getElementById("messages").appendChild(div);
+  return div;
+}
+
+// typing animation
+function typeEffect(text){
+  let div = document.createElement("div");
+  div.className = "bot";
+  document.getElementById("messages").appendChild(div);
+
+  let i = 0;
+  function typing(){
+    if(i < text.length){
+      div.innerHTML += text.charAt(i);
+      i++;
+      setTimeout(typing, 15);
+    }
+  }
+  typing();
+}
+</script>
+
+</body>
+</html>
